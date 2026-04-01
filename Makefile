@@ -11,15 +11,13 @@ DATA_DIR ?=
 RESULTS_DIR ?=
 
 process-data:
-	source "$(CONDA_SH)"
-	conda activate "$(CONDA_ENV)"
 	RAW_DIR="$${RAW_DIR:-$$(python -c 'import configs.paths as c; print(c.RAW_DATA_PATH)')}" ; \
 	DATA_DIR="$${DATA_DIR:-$$(python -c 'import configs.paths as c; print(c.DATA_PATH)')}" ; \
 	RESULTS_DIR="$${RESULTS_DIR:-$$(python -c 'import configs.paths as c; print(c.RESULTS_PATH)')}" ; \
 	python -m src.data.process_data \
-		--raw-dir "$$RAW_DIR" \
-		--data-dir "$$DATA_DIR" \
-		--results-dir "$$RESULTS_DIR"
+	    --raw-dir "$$RAW_DIR" \
+	    --data-dir "$$DATA_DIR" \
+	    --results-dir "$$RESULTS_DIR"
 
 
 # ----------------------

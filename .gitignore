@@ -181,6 +181,10 @@ logs/
 lightning_logs/
 processed/
 results/
+data/
+
+# macOS
+.DS_Store
 
 .vscode/settings.json
 CLAUDE.md

@@ -1,0 +1,28 @@
+# Example run config for XGBoost
+# Usage (after implementation): make train RUN=configs/runs/xgb_example.yaml
+# Bg traning: make train-bg RUN=configs/runs/xgb_example.yaml
+
+model: xgb
+
+# Optional: processed dataset version name under DATA_PATH/<version>/processed_series.csv
+# Example: pipeline-min10100-comp0.4-out=9vars-exclude-year-apply-base-year-2025-09-24
+# dataset: pipeline-...
+
+dataset: pipeline-min10100-comp0.4-out=9vars-exclude-year-apply-base-year-with-ssp-2026-04-01
+
+# Optional: GPUs to expose for this run.
+# You can set a single value (applies to all phases) or a per-phase mapping.
+cuda_visible_devices:
+  default: "0"
+  search: "0,1,2,3"
+
+# Run phases in order. Typical: [preprocess, search, train, test, plot]
+# Omit 'search' to skip hyperparameter search and use defaults instead.
+phases: [preprocess, search, train, test, plot]
+
+# Optional note saved into session state (supported by xgb launcher)
+note: "Lets measure how long it takes."
+
+# To resume an existing run, set run_id and resume (overrides 'phases'):
+# run_id: xgb_01        # existing run ID under results/xgb/
+# resume: train         # phase to resume from (preprocess, search, train, test, plot)

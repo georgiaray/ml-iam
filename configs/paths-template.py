@@ -5,6 +5,6 @@ processed data, and results are stored on your system.
 """
 
 # Directories
-RAW_DATA_PATH = "/path/to/ar6/data"      # Where you saved AR6 CSVs
+RAW_DATA_PATH = "../data"      # Where you saved AR6 CSVs
 DATA_PATH = "./processed"                 # Where processed data will be saved
 RESULTS_PATH = "./results"                # Where model outputs will be saved
