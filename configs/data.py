@@ -13,6 +13,16 @@ OUTPUT_VARIABLES = [
     "Emissions|CO2",
     "Emissions|CH4",
     "Emissions|N2O",
+    "Secondary Energy|Electricity",
+    "Secondary Energy|Electricity|Biomass",
+    "Secondary Energy|Electricity|Coal",
+    "Secondary Energy|Electricity|Gas",
+    "Secondary Energy|Electricity|Geothermal",
+    "Secondary Energy|Electricity|Hydro",
+    "Secondary Energy|Electricity|Nuclear",
+    "Secondary Energy|Electricity|Oil",
+    "Secondary Energy|Electricity|Solar",
+    "Secondary Energy|Electricity|Wind",
 ]
 
 # Units for each output variable (single source of truth)
@@ -27,6 +37,16 @@ UNITS_BY_OUTPUT = {
     "Emissions|CO2": "Mt CO2/yr",
     "Emissions|CH4": "Mt CH4/yr",
     "Emissions|N2O": "Mt N2O/yr",
+    "Secondary Energy|Electricity": "EJ/yr",
+    "Secondary Energy|Electricity|Biomass": "EJ/yr",
+    "Secondary Energy|Electricity|Coal": "EJ/yr",
+    "Secondary Energy|Electricity|Gas": "EJ/yr",
+    "Secondary Energy|Electricity|Geothermal": "EJ/yr",
+    "Secondary Energy|Electricity|Hydro": "EJ/yr",
+    "Secondary Energy|Electricity|Nuclear": "EJ/yr",
+    "Secondary Energy|Electricity|Oil": "EJ/yr",
+    "Secondary Energy|Electricity|Solar": "EJ/yr",
+    "Secondary Energy|Electricity|Wind": "EJ/yr",
 }
 
 # Convenience: units list aligned to OUTPUT_VARIABLES order
