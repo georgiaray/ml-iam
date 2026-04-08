@@ -53,10 +53,17 @@ def load(results_base: Path, check: str, filename: str) -> Optional[pd.DataFrame
 
 
 def md_table(df: pd.DataFrame, fmt: Optional[dict] = None) -> str:
-    """Render a DataFrame as a GitHub-flavoured Markdown table."""
+    """Render a DataFrame as a GitHub-flavoured Markdown table.
+
+    Pipes inside cell values are escaped so that variable names like
+    'Primary Energy|Coal' do not break the table structure.
+    """
+    def _escape(s: str) -> str:
+        return s.replace("|", "\\|")
+
     fmt = fmt or {}
     cols = df.columns.tolist()
-    header = "| " + " | ".join(cols) + " |"
+    header = "| " + " | ".join(_escape(str(c)) for c in cols) + " |"
     sep    = "| " + " | ".join(["---"] * len(cols)) + " |"
     rows   = []
     for _, row in df.iterrows():
@@ -64,11 +71,11 @@ def md_table(df: pd.DataFrame, fmt: Optional[dict] = None) -> str:
         for col in cols:
             val = row[col]
             if col in fmt:
-                cells.append(fmt[col].format(val))
+                cells.append(_escape(fmt[col].format(val)))
             elif isinstance(val, float):
-                cells.append(f"{val:.4f}")
+                cells.append(_escape(f"{val:.4f}"))
             else:
-                cells.append(str(val))
+                cells.append(_escape(str(val)))
         rows.append("| " + " | ".join(cells) + " |")
     return "\n".join([header, sep] + rows)
 
@@ -213,7 +220,13 @@ def section_sum_check(results_base: Path, fig_dir: Path) -> tuple[str, list]:
                 max_error_pct=("max_error_pct", "max"),
             )
             .reset_index()
-            .rename(columns={"parent_variable": "Parent Variable"})
+            .rename(columns={
+                "parent_variable":    "Parent Variable",
+                "n_scenario_regions": "Scenario-regions",
+                "pass_rate_pct":      "Pass rate (%)",
+                "mean_error_pct":     "Mean error (%)",
+                "max_error_pct":      "Max error (%)",
+            })
         )
         blocks.append("### Pass Rates by Parent Variable\n\n" + md_table(tbl_data))
     else:
@@ -331,11 +344,16 @@ def section_plausibility(results_base: Path, fig_dir: Path) -> tuple[str, list]:
     total  = len(viol)
     n_viol = viol["violation"].sum()
     vr     = 100 * n_viol / total if total else 0.0
+    def _median_severity(df: pd.DataFrame) -> float:
+        """Median severity of violation rows, with infinities stripped."""
+        sev = df.loc[df["violation"], "severity"].replace([np.inf, -np.inf], np.nan).dropna()
+        return float(sev.median()) if len(sev) else 0.0
+
     summary_lines = (
         f"**Total timesteps evaluated:** {total:,}  \n"
         f"**Violations:** {int(n_viol):,} ({vr:.2f}%)  \n"
-        f"**Mean severity** (violations only): "
-        f"{viol.loc[viol['violation'], 'severity'].mean():.3f} bound-widths"
+        f"**Median severity** (violations only): "
+        f"{_median_severity(viol):.3f} bound-widths"
     )
     if gt_viol is not None:
         gt_total  = len(gt_viol)
@@ -343,8 +361,8 @@ def section_plausibility(results_base: Path, fig_dir: Path) -> tuple[str, list]:
         gt_vr     = 100 * gt_n_viol / gt_total if gt_total else 0.0
         summary_lines += (
             f"  \n\n**Ground truth — violation rate:** {gt_vr:.2f}%  \n"
-            f"**Ground truth — mean severity:** "
-            f"{gt_viol.loc[gt_viol['violation'], 'severity'].mean():.3f} bound-widths  \n"
+            f"**Ground truth — median severity:** "
+            f"{_median_severity(gt_viol):.3f} bound-widths  \n"
             f"_({vr - gt_vr:+.2f}pp difference: predictions vs ground truth)_"
         )
     blocks.append(summary_lines)

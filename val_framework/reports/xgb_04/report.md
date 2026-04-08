@@ -1,7 +1,7 @@
 # Validation Report: xgb_04
 
 **Run ID:** `xgb_04`
-**Generated:** 2026-04-08 11:04
+**Generated:** 2026-04-08 11:18
 **Results path:** `results/xgb/xgb_04/`
 
 ---
@@ -26,9 +26,9 @@ ground truth pass rate to understand baseline data consistency._
 
 ### Pass Rates by Parent Variable
 
-| Parent Variable | n_scenario_regions | pass_rate_pct | mean_error_pct | max_error_pct |
+| Parent Variable | Scenario-regions | Pass rate (%) | Mean error (%) | Max error (%) |
 | --- | --- | --- | --- | --- |
-| Secondary Energy|Electricity | 1984 | 0.0000 | 6.5384 | 219.8757 |
+| Secondary Energy\|Electricity | 1984 | 0.0000 | 6.5384 | 219.8757 |
 
 ### Error Distribution
 
@@ -58,10 +58,10 @@ Empirical bounds are derived per variable._
 
 **Total timesteps evaluated:** 419,995  
 **Violations:** 12,786 (3.04%)  
-**Mean severity** (violations only): 2.966 bound-widths  
+**Median severity** (violations only): 0.257 bound-widths  
 
 **Ground truth — violation rate:** 1.76%  
-**Ground truth — mean severity:** 1624210918.136 bound-widths  
+**Ground truth — median severity:** 0.148 bound-widths  
 _(+1.28pp difference: predictions vs ground truth)_
 
 ### Violation Rate by Variable
@@ -72,25 +72,25 @@ _(+1.28pp difference: predictions vs ground truth)_
 
 | Variable | Lower bound | Upper bound |
 | --- | --- | --- |
-| Emissions|CH4 | -0.3477 | 0.1688 |
-| Emissions|CO2 | -8.2397 | 0.5696 |
-| Emissions|N2O | -0.3593 | 0.1809 |
-| Primary Energy|Coal | -0.9983 | 1.6217 |
-| Primary Energy|Gas | -0.7501 | 0.8492 |
-| Primary Energy|Nuclear | -1.0000 | 2.1344 |
-| Primary Energy|Oil | -0.9504 | 0.5854 |
-| Primary Energy|Solar | -0.0949 | 7.8881 |
-| Primary Energy|Wind | -0.1478 | 8.9436 |
-| Secondary Energy|Electricity | -0.0910 | 0.6844 |
-| Secondary Energy|Electricity|Biomass | -0.9989 | 10.3980 |
-| Secondary Energy|Electricity|Coal | -1.0000 | 3.0881 |
-| Secondary Energy|Electricity|Gas | -1.0000 | 1.6098 |
-| Secondary Energy|Electricity|Geothermal | -0.4082 | 15.3420 |
-| Secondary Energy|Electricity|Hydro | -0.1387 | 0.7377 |
-| Secondary Energy|Electricity|Nuclear | -1.0000 | 2.0819 |
-| Secondary Energy|Electricity|Oil | -1.0000 | 3.1086 |
-| Secondary Energy|Electricity|Solar | -0.1054 | 9.0838 |
-| Secondary Energy|Electricity|Wind | -0.1557 | 9.0326 |
+| Emissions\|CH4 | -0.3477 | 0.1688 |
+| Emissions\|CO2 | -8.2397 | 0.5696 |
+| Emissions\|N2O | -0.3593 | 0.1809 |
+| Primary Energy\|Coal | -0.9983 | 1.6217 |
+| Primary Energy\|Gas | -0.7501 | 0.8492 |
+| Primary Energy\|Nuclear | -1.0000 | 2.1344 |
+| Primary Energy\|Oil | -0.9504 | 0.5854 |
+| Primary Energy\|Solar | -0.0949 | 7.8881 |
+| Primary Energy\|Wind | -0.1478 | 8.9436 |
+| Secondary Energy\|Electricity | -0.0910 | 0.6844 |
+| Secondary Energy\|Electricity\|Biomass | -0.9989 | 10.3980 |
+| Secondary Energy\|Electricity\|Coal | -1.0000 | 3.0881 |
+| Secondary Energy\|Electricity\|Gas | -1.0000 | 1.6098 |
+| Secondary Energy\|Electricity\|Geothermal | -0.4082 | 15.3420 |
+| Secondary Energy\|Electricity\|Hydro | -0.1387 | 0.7377 |
+| Secondary Energy\|Electricity\|Nuclear | -1.0000 | 2.0819 |
+| Secondary Energy\|Electricity\|Oil | -1.0000 | 3.1086 |
+| Secondary Energy\|Electricity\|Solar | -0.1054 | 9.0838 |
+| Secondary Energy\|Electricity\|Wind | -0.1557 | 9.0326 |
 
 ### Severity Distribution
 
@@ -138,25 +138,25 @@ and empirical per-variable bounds derived from the AR6 test-set ground truth._
 
 | Variable | Lower bound | Upper bound |
 | --- | --- | --- |
-| Primary Energy|Coal | 0 | 1.885e+05 |
-| Primary Energy|Gas | 22.05 | 2.006e+05 |
-| Primary Energy|Oil | 0.2682 | 2.024e+05 |
-| Primary Energy|Solar | 4.163 | 1.517e+05 |
-| Primary Energy|Wind | 4.211 | 1.205e+05 |
-| Primary Energy|Nuclear | 0 | 5.49e+04 |
-| Emissions|CO2 | -4362 | 4.188e+04 |
-| Emissions|CH4 | 0.4528 | 379 |
-| Emissions|N2O | 16.78 | 1.291e+04 |
-| Secondary Energy|Electricity | 666.4 | 3.737e+05 |
-| Secondary Energy|Electricity|Biomass | 0 | 2.043e+04 |
-| Secondary Energy|Electricity|Coal | 0 | 4.069e+04 |
-| Secondary Energy|Electricity|Gas | 0 | 3.94e+04 |
-| Secondary Energy|Electricity|Geothermal | 0 | 4205 |
-| Secondary Energy|Electricity|Hydro | 1.834 | 3.401e+04 |
-| Secondary Energy|Electricity|Nuclear | 0 | 5.185e+04 |
-| Secondary Energy|Electricity|Oil | 0 | 3919 |
-| Secondary Energy|Electricity|Solar | 3.7 | 1.292e+05 |
-| Secondary Energy|Electricity|Wind | 3.609 | 1.176e+05 |
+| Primary Energy\|Coal | 0 | 1.885e+05 |
+| Primary Energy\|Gas | 22.05 | 2.006e+05 |
+| Primary Energy\|Oil | 0.2682 | 2.024e+05 |
+| Primary Energy\|Solar | 4.163 | 1.517e+05 |
+| Primary Energy\|Wind | 4.211 | 1.205e+05 |
+| Primary Energy\|Nuclear | 0 | 5.49e+04 |
+| Emissions\|CO2 | -4362 | 4.188e+04 |
+| Emissions\|CH4 | 0.4528 | 379 |
+| Emissions\|N2O | 16.78 | 1.291e+04 |
+| Secondary Energy\|Electricity | 666.4 | 3.737e+05 |
+| Secondary Energy\|Electricity\|Biomass | 0 | 2.043e+04 |
+| Secondary Energy\|Electricity\|Coal | 0 | 4.069e+04 |
+| Secondary Energy\|Electricity\|Gas | 0 | 3.94e+04 |
+| Secondary Energy\|Electricity\|Geothermal | 0 | 4205 |
+| Secondary Energy\|Electricity\|Hydro | 1.834 | 3.401e+04 |
+| Secondary Energy\|Electricity\|Nuclear | 0 | 5.185e+04 |
+| Secondary Energy\|Electricity\|Oil | 0 | 3919 |
+| Secondary Energy\|Electricity\|Solar | 3.7 | 1.292e+05 |
+| Secondary Energy\|Electricity\|Wind | 3.609 | 1.176e+05 |
 
 ### Violations by Variable
 
