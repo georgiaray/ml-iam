@@ -20,13 +20,25 @@ being asked is always: **are the generated predictions physically plausible?**
 
 Run all checks at once:
 ```bash
-python val_framework/run_all.py --run_id xgb_03
+python val_framework/run_all.py --run_id xgb_04
+```
+
+Run all checks and generate a report in one go:
+```bash
+python val_framework/run_all.py --run_id xgb_04 --report
 ```
 
 Run an individual check:
 ```bash
-python val_framework/check_plausibility.py --run_id xgb_03
-python val_framework/sum_check.py --run_id xgb_03
+python val_framework/check_plausibility.py --run_id xgb_04
+python val_framework/sum_check.py --run_id xgb_04
+python val_framework/regional_consistency.py --run_id xgb_04
+python val_framework/bounds_check.py --run_id xgb_04
+```
+
+Generate a report from already-completed check results:
+```bash
+python val_framework/make_val_report.py --run_id xgb_04
 ```
 
 ---
@@ -82,48 +94,170 @@ bounds, not as the thing being checked.
 
 ---
 
-### `sum_check.py` — Secondary Energy Electricity Sum Check
+### `sum_check.py` — Hierarchy Sum Check
 
 **What it does:**
-Verifies that the **generated predictions** for `Secondary Energy|Electricity`
-(total electricity generation) equal the sum of the predicted sub-fuel components
-at every timestep:
+Automatically discovers all parent-child variable relationships in the run's target
+set using the `|` separator convention (e.g. `Secondary Energy|Electricity` is a
+parent of `Secondary Energy|Electricity|Solar`). For each parent, it verifies that
+the predicted parent value equals the sum of its direct children at every timestep:
 
 ```
-sum = Biomass + Coal + Gas + Geothermal + Hydro + Nuclear + Oil + Solar + Wind
-error = |total - sum| / |total|
+error = |parent - sum_of_children| / |parent|
 ```
 
-A scenario **passes** if `error < 1.2%` at every timestep. This mirrors the
-standard vetting metric used in the AR6 Scenarios Database.
+A scenario **passes** if `error < 1.2%` at every timestep for every parent variable.
+This mirrors the standard vetting metric used in the AR6 Scenarios Database. We
+**expect predictions to fail** this check — that failure is the signal, demonstrating
+that the model has no hard constraint enforcing the sum relationship. The check is
+most useful when compared to the same check run on the AR6 ground truth
+(`--use_ground_truth`), which should mostly pass.
 
-**Required model outputs** (all of the following must be in the run's target variables):
-- `Secondary Energy|Electricity` — total electricity generation
-- `Secondary Energy|Electricity|Biomass`
-- `Secondary Energy|Electricity|Coal`
-- `Secondary Energy|Electricity|Gas`
-- `Secondary Energy|Electricity|Geothermal`
-- `Secondary Energy|Electricity|Hydro`
-- `Secondary Energy|Electricity|Nuclear`
-- `Secondary Energy|Electricity|Oil`
-- `Secondary Energy|Electricity|Solar`
-- `Secondary Energy|Electricity|Wind`
+The hierarchy is discovered automatically — no variable names are hardcoded. If the
+model's target set gains new variables in future runs, the check picks them up without
+any changes.
 
-The script will exit with an informative error if any are missing from the run's targets.
+**Required model outputs:** At least one parent variable and at least one of its direct
+children must both be in the run's targets. The check will exit gracefully if no
+hierarchical relationships are found.
 
-**Required data:** Only the run's cached predictions — no AR6 ground truth is used
-in this check. The sum constraint is a definitional identity that the generated
-values must satisfy on their own.
+**Required data:** Only the run's cached predictions. The sum constraint is a
+definitional identity; no ground truth is needed to evaluate it. Use
+`--use_ground_truth` to run the same check against AR6 data as a sanity check.
 
 **Key options:**
 | Flag | Default | Description |
 |---|---|---|
 | `--threshold` | `0.012` | Maximum allowed relative error per timestep (1.2%) |
+| `--abs_floor` | `1.0` | Minimum absolute parent value for relative error to be computed. Timesteps below this are flagged as `zero_total` and excluded from the metric. |
+| `--use_ground_truth` | off | Check AR6 ground truth instead of predictions |
 
 **Outputs** (`results/xgb/<run_id>/sum_check/`):
 - `report.txt` — full printed report
-- `scenario_summary.csv` — one row per scenario with mean error, max error, pass/fail
-- `timestep_errors.csv` — one row per scenario × year with raw error values
+- `scenario_summary.csv` — one row per (scenario × region × parent variable) with mean error, max error, pass/fail
+- `timestep_errors.csv` — one row per (scenario × region × year × parent variable) with raw error values
+
+---
+
+### `regional_consistency.py` — Regional Consistency Check
+
+**What it does:**
+Verifies that predicted values for the `World` region equal the sum of predicted
+values across all subregions in a complete regional grouping (R5, R6, or R10):
+
+```
+error = |World - sum_of_subregions| / |World|
+```
+
+For each (Model, Scenario), the check auto-detects which groupings have full
+coverage — i.e. World plus all subregions in that grouping are present. Only those
+groupings are checked for that scenario, so a scenario with only R6 regions is not
+penalised for missing R10. If a scenario does not have World or has an incomplete
+grouping, it is silently skipped with the coverage count reported.
+
+Like the sum check, we **expect predictions to fail** this check if the model
+predicts regional and world values independently without enforcing the aggregation
+constraint.
+
+**Required model outputs:** Any target variables work. The check runs on all
+variables where World and subregional predictions both exist.
+
+**Required data:** Only the run's cached predictions. Use `--use_ground_truth` to
+run the same check against AR6 data.
+
+**Regional groupings** (hardcoded in `REGIONAL_GROUPINGS`):
+- `R5` — R5ASIA, R5LAM, R5MAF, R5OECD90+EU, R5REF
+- `R6` — R6AFRICA, R6ASIA, R6LAM, R6MIDDLE_EAST, R6OECD90+EU, R6REF
+- `R10` — R10AFRICA, R10CHINA+, R10EUROPE, R10INDIA+, R10LATIN_AM, R10MIDDLE_EAST, R10NORTH_AM, R10PAC_OECD, R10REF_ECON, R10REST_ASIA, R10ROWO
+
+**Key options:**
+| Flag | Default | Description |
+|---|---|---|
+| `--threshold` | `0.012` | Maximum allowed relative error per timestep (1.2%) |
+| `--abs_floor` | `1.0` | Minimum absolute World value for relative error to be computed |
+| `--grouping` | all | Restrict to a single grouping: `R5`, `R6`, or `R10` |
+| `--use_ground_truth` | off | Check AR6 ground truth instead of predictions |
+
+**Outputs** (`results/xgb/<run_id>/regional_consistency/`):
+- `report.txt` — full printed report
+- `scenario_summary.csv` — one row per (scenario × variable × grouping) with mean error, pass/fail
+- `timestep_errors.csv` — one row per (scenario × variable × year × grouping) with raw error values
+
+---
+
+### `bounds_check.py` — Physical Bounds Check
+
+**What it does:**
+Checks predicted values against hard physical bounds and, optionally, empirical
+bounds derived from the AR6 test-set ground truth.
+
+**Hard physical bounds** are defined in `PHYSICAL_BOUNDS` at the top of the script.
+These are absolute constraints no physically plausible scenario can violate:
+- All energy generation variables (`Primary Energy|*`, `Secondary Energy|*`) must be
+  non-negative — energy cannot be physically negative.
+- Emissions variables have no hard lower bound because carbon dioxide removal (CDR)
+  scenarios can produce negative net emissions.
+
+**Empirical bounds** (on by default, disable with `--no_empirical`) are derived
+per-variable from the AR6 test-set ground truth at the chosen percentile range.
+They represent the envelope of values seen in real IAM data. These are combined
+with physical bounds by taking the more restrictive of the two on each side.
+
+A timestep is flagged as a violation if its predicted value falls below `lower_bound`
+or above `upper_bound`.
+
+**Required model outputs:** Any target variables listed in `PHYSICAL_BOUNDS` or, if
+`--no_empirical` is not set, any variable in the targets.
+
+**Required data:** Only the run's cached predictions for the physical-bounds-only
+check. AR6 ground truth is required if `--no_empirical` is not set (loaded automatically).
+
+**Key options:**
+| Flag | Default | Description |
+|---|---|---|
+| `--no_empirical` | off | Disable empirical bounds — use physical bounds only |
+| `--percentile` | `1.0` | Tail percentile for empirical bounds. Has no effect if `--no_empirical` is set. |
+| `--use_ground_truth` | off | Check AR6 ground truth instead of predictions (useful as a sanity check that the bounds are not too tight) |
+
+**Outputs** (`results/xgb/<run_id>/bounds_check/`):
+- `report.txt` — full printed report
+- `scenario_summary.csv` — one row per (scenario × region × variable) with violation counts
+- `violations.csv` — every flagged timestep (violations only)
+- `bounds_used.csv` — the exact lower/upper bounds applied per variable
+
+---
+
+---
+
+### `make_val_report.py` — Validation Report Generator
+
+**What it does:**
+Reads the CSV outputs from all completed checks and generates a single Markdown
+report with summary tables and figures. Must be run after `run_all.py` (or after
+whichever individual checks you want included). Missing check outputs are silently
+skipped with a note in the relevant section.
+
+The report includes:
+- An overview table with pass rates and key metrics for all checks, side-by-side
+  predictions vs AR6 ground truth wherever ground truth results are available
+- One section per check with tables, figures, and prediction/ground truth comparisons
+- Figures: error distribution histograms, error-by-year line charts, violation rate
+  bar charts by variable, bounds violation breakdowns
+
+Ground truth comparisons are included automatically when ground truth check results
+exist (i.e. when the corresponding check was also run with `--use_ground_truth`).
+
+**Required data:** CSV outputs from the individual checks under
+`results/xgb/<run_id>/`. At least one check must have been run.
+
+**Key options:**
+| Flag | Default | Description |
+|---|---|---|
+| `--title` | `"Validation Report: <run_id>"` | Optional custom report title |
+
+**Outputs** (`val_framework/reports/<run_id>/`):
+- `report.md` — the full report (open in any Markdown renderer)
+- `figures/` — PNG figures embedded in the report
 
 ---
 
@@ -134,9 +268,11 @@ values must satisfy on their own.
 2. Add an entry to the `CHECKS` registry in `run_all.py`:
    ```python
    CHECKS = [
-       ("check_plausibility", "Growth rate plausibility check"),
-       ("sum_check",          "Secondary Energy|Electricity sum check"),
-       ("your_check",         "Description of your check"),   # <-- add here
+       ("check_plausibility",   "Growth rate plausibility check"),
+       ("sum_check",            "Hierarchy sum check"),
+       ("regional_consistency", "Regional consistency check"),
+       ("bounds_check",         "Physical bounds check"),
+       ("your_check",           "Description of your check"),   # <-- add here
    ]
    ```
 3. Add a corresponding `--no-<your_check>` flag to `run_all.py` if you want

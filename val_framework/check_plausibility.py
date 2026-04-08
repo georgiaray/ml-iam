@@ -294,6 +294,12 @@ def main():
         "--by_category", action="store_true",
         help="Also break down violations by scenario category (C1-C8)"
     )
+    parser.add_argument(
+        "--use_ground_truth", action="store_true",
+        help="Check AR6 ground truth (y_test) instead of model predictions. "
+             "Bounds are still derived from y_test; this checks whether the "
+             "ground truth itself falls within those bounds."
+    )
     args = parser.parse_args()
 
     lower_pct = args.percentile
@@ -309,23 +315,34 @@ def main():
     print(f"  Ground truth value range (all targets): [{y_test.min():.3f}, {y_test.max():.3f}]")
     print(f"  Predictions value range  (all targets): [{preds.min():.3f}, {preds.max():.3f}]")
 
+    if args.use_ground_truth:
+        values     = y_test
+        label      = "AR6 ground truth (y_test)"
+        out_subdir = "plausibility_ground_truth"
+    else:
+        values     = preds
+        label      = "model predictions"
+        out_subdir = "plausibility"
+
+    print(f"\n  Data source: {label}")
+
     # ---- Build trajectory DataFrames ----
     print(f"\n  Building long-format trajectory DataFrames...")
-    gt_long = build_trajectory_df(test_data, y_test, targets, label="ground_truth")
-    pred_long = build_trajectory_df(test_data, preds, targets, label="predicted")
-    print(f"  Ground truth long shape: {gt_long.shape}")
-    print(f"  Predictions long shape : {pred_long.shape}")
+    gt_long   = build_trajectory_df(test_data, y_test,  targets, label="ground_truth")
+    val_long  = build_trajectory_df(test_data, values,  targets, label=label)
+    print(f"  Ground truth long shape : {gt_long.shape}")
+    print(f"  Validated data shape    : {val_long.shape}")
     n_scenarios = gt_long[["Model", "Scenario", "Region"]].drop_duplicates().shape[0]
     print(f"  Unique scenario x region combinations: {n_scenarios}")
 
     # ---- Compute growth rates ----
     print(f"\n  Computing 5-year period growth rates...")
-    gt_growth = compute_growth_rates(gt_long)
-    pred_growth = compute_growth_rates(pred_long)
-    print(f"  Ground truth growth rate rows: {len(gt_growth):,}")
-    print(f"  Predicted growth rate rows   : {len(pred_growth):,}")
+    gt_growth  = compute_growth_rates(gt_long)
+    val_growth = compute_growth_rates(val_long)
+    print(f"  Ground truth growth rate rows : {len(gt_growth):,}")
+    print(f"  Validated data growth rate rows: {len(val_growth):,}")
 
-    # ---- Empirical bounds from ground truth ----
+    # ---- Empirical bounds always derived from ground truth ----
     print(f"\n  Deriving empirical bounds from ground truth ({lower_pct}th / {upper_pct}th percentiles)...")
     bounds = derive_empirical_bounds(gt_growth, lower_pct, upper_pct)
     print(f"\n  {'Variable':<35}  {'Lower':>8}  {'Upper':>8}")
@@ -333,12 +350,12 @@ def main():
     for _, row in bounds.iterrows():
         print(f"  {row['Variable']:<35}  {row['lower_bound']:>+8.4f}  {row['upper_bound']:>+8.4f}")
 
-    # ---- Flag violations ----
-    print(f"\n  Flagging violations in predicted trajectories...")
-    flagged = flag_violations(pred_growth, bounds)
+    # ---- Flag violations in the validated data ----
+    print(f"\n  Flagging violations in {label}...")
+    flagged = flag_violations(val_growth, bounds)
 
     # ---- Tee stdout to report.txt from here onwards ----
-    out_dir = REPO_ROOT / "results" / "xgb" / args.run_id / "plausibility"
+    out_dir = REPO_ROOT / "results" / "xgb" / args.run_id / out_subdir
     out_dir.mkdir(parents=True, exist_ok=True)
     report_path = out_dir / "report.txt"
     sys.stdout = _Tee(report_path)
